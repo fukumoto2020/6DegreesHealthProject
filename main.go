@@ -6,19 +6,46 @@ import (
  "log"
  "strconv"
  "os"
+ "math"
 )
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
  fmt.Fprint(w, "Welcome!\n")
 }
 func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
- fmt.Fprintf(w, "aloha, %s!\n", ps.ByName("name"))
+ fmt.Fprintf(w, "Hello, %s!\n", ps.ByName("name"))
 }
 
 //checks if input is a number
-func IsInt(s string) bool {
+func IsNumber(s string) bool {
 	_, err := strconv.ParseInt(s,10,64)
 	return err == nil
  }
+
+ //check if input is positive
+func IsPositive(s string) bool{
+	f, err := strconv.ParseFloat(s, 64)
+	isPosInt := !math.Signbit(f)
+	if(isPosInt){
+		return err == nil
+	}
+	return false
+}
+//checks if s is both a number and positive
+func IsInteger(s string) bool{
+	if(IsNumber(s) && IsPositive(s)){
+		return true
+	}else{
+		return false
+	}
+}
+
+func TooBig(n int) bool{
+	if n>42{
+		return true
+	} else{
+		return false
+	}
+}
 
  //recursive fibonacci function 
 func FibonacciRecursion(n int) int {
@@ -31,7 +58,7 @@ func FibonacciRecursion(n int) int {
 // fibonacci sequence generator 
 func Fib(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var number string = ps.ByName("number")
-	if IsInt(number){
+	if (IsInteger(number)){
 		//if input is an integer, casts variable number from type string to int
 		number, err := strconv.Atoi(number)
 		if err != nil {
@@ -39,9 +66,15 @@ func Fib(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			fmt.Println(err)
 			os.Exit(2)
 		}else{
-			//prints fibonacci sequence up until specified number 
-			for i := 0; i <= number; i++ { 
-				fmt.Fprintf(w, strconv.Itoa(FibonacciRecursion(i)) + " ")
+			//attempt to control overflow: doesn't seem to work with numbers greater than 42
+			if(TooBig(number)){
+				fmt.Fprintf(w, "Error: %d is too large. Please enter a smaller number", number)
+			} else{
+				//prints fibonacci sequence up until specified number 
+				for i := 0; i <= number; i++ { 
+					fmt.Fprintf(w, strconv.Itoa(FibonacciRecursion(i)) + " ")
+					fmt.Println(strconv.Itoa(FibonacciRecursion(i)) + " ")
+				}
 			}
 		}
 	} else{
